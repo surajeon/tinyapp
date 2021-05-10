@@ -1,7 +1,13 @@
 const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
+const bodyParser = require("body-parser");
+app.use(bodyParser.urlencoded({extended: true}));
 // const morgan = require('morgan');
+
+function generateRandomString() {
+
+}
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
@@ -19,6 +25,11 @@ app.get("/urls", (req, res) => {
   res.render("urls_index", templateVars);
 });
 
+app.get("/urls/new", (req, res) => { // it needs to be placed before shortURL get route. Because Express will think that new is a route parameter.  
+  res.render("urls_new");
+});
+//A good rule of thumb to follow is that routes should be ordered from most specific to least specific.
+
 app.get("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
   const templateVars = { shortURL: shortURL, longURL: urlDatabase[shortURL] };
@@ -33,16 +44,15 @@ app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
 
-// app.get("/set", (req, res) => {
-//   const a = 1;
-//   res.send(`a = ${a}`);
-// });
-
-// app.get("/fetch", (req, res) => {
-//   res.send(`a = ${a}`);
-// });
+app.post("/urls", (req, res) => {
+  console.log(req.body);
+  res.send("OK");
+});
 
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
+
+
+
