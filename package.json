@@ -16,5 +16,8 @@
   "bugs": {
     "url": "https://github.com/surajeon/tinyapp/issues"
   },
-  "homepage": "https://github.com/surajeon/tinyapp#readme"
+  "homepage": "https://github.com/surajeon/tinyapp#readme",
+  "dependencies": {
+    "express": "^4.17.1"
+  }
 }
