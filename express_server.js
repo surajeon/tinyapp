@@ -19,15 +19,22 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
-app.set("view engine", "ejs"); 
+app.set("view engine", "ejs");
 
-app.get("/", (req, res) => {
+app.get("/", (req, res) => { 
   res.send("Hello!");
 });
 
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase };
+  const templateVars = { urls: urlDatabase }; 
   res.render("urls_index", templateVars);
+});
+app.post("/urls", (req, res) => {
+  const rString = generateRandomString(6, chars);
+  urlDatabase[rString] = req.body.longURL;
+  console.log(urlDatabase);
+  // res.redirect(urlDatabase[rString]);
+  res.redirect(`/urls/${rString}`);
 });
 
 app.get("/urls/new", (req, res) => { // it needs to be placed before shortURL get route. Because Express will think that new is a route parameter.  
@@ -49,18 +56,17 @@ app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
 
-app.post("/urls", (req, res) => {
-  const rString = generateRandomString(6, chars);
-  urlDatabase[rString] = req.body.longURL;
-  console.log(urlDatabase);
-  // res.redirect(urlDatabase[rString]);
-  res.redirect(`/urls/${rString}`);
-});
 
 app.get("/u/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
   let longURL = urlDatabase[shortURL];
   res.redirect(longURL);
+});
+
+app.post("/urls/:shortURL/delete", (req, res) => {
+  const shortURL = req.params.shortURL;
+  delete urlDatabase[shortURL];
+  res.redirect("/urls");
 });
 
 app.listen(PORT, () => {
