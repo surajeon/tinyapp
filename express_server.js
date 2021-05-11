@@ -37,6 +37,13 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${rString}`);
 });
 
+app.post("/urls/:shortURL", (req, res) => {
+  const newLongURL = req.body.longURL;
+  const shortURL = req.params.shortURL;
+  urlDatabase[shortURL] = newLongURL;
+  res.redirect("/urls");
+})
+
 app.get("/urls/new", (req, res) => { // it needs to be placed before shortURL get route. Because Express will think that new is a route parameter.  
   res.render("urls_new");
 });
@@ -52,7 +59,7 @@ app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
 
-app.get("/hello", (req, res) => {
+app.get("/hi", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
 
@@ -63,10 +70,19 @@ app.get("/u/:shortURL", (req, res) => {
   res.redirect(longURL);
 });
 
+
 app.post("/urls/:shortURL/delete", (req, res) => {
   const shortURL = req.params.shortURL;
   delete urlDatabase[shortURL];
   res.redirect("/urls");
+});
+
+app.post("/urls/:shortURL", (req, res)=>{
+  const shortURL = req.params.shortURL;
+  urlDatabase[shortURL] = req.body.longURL;
+  res.redirect("/urls");
+  // const longURL = urlDatabase[shortURL];
+  // res.redirect(longURL);  
 });
 
 app.listen(PORT, () => {
