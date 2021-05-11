@@ -2,12 +2,17 @@ const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
 const bodyParser = require("body-parser");
-app.use(bodyParser.urlencoded({extended: true}));
+app.use(bodyParser.urlencoded({ extended: true }));
 // const morgan = require('morgan');
 
-function generateRandomString() {
-
+function generateRandomString(length, arr) {
+    var random = '';
+    for (var i = length; i > 0; i--) {
+        random += arr[Math.floor(Math.random() * arr.length)];
+    }
+    return random;
 }
+const chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
@@ -45,10 +50,18 @@ app.get("/hello", (req, res) => {
 });
 
 app.post("/urls", (req, res) => {
-  console.log(req.body);
-  res.send("OK");
+  const rString = generateRandomString(6, chars);
+  urlDatabase[rString] = req.body.longURL;
+  console.log(urlDatabase);
+  // res.redirect(urlDatabase[rString]);
+  res.redirect(`/urls/${rString}`);
 });
 
+app.get("/u/:shortURL", (req, res) => {
+  const shortURL = req.params.shortURL;
+  let longURL = urlDatabase[shortURL];
+  res.redirect(longURL);
+});
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
