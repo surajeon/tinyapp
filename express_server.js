@@ -7,7 +7,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
 // const morgan = require('morgan');
 
-function generateRandomString(length, arr) {
+function generateRandomString(length, arr) { // randomize shortURL function
     var random = '';
     for (var i = length; i > 0; i--) {
         random += arr[Math.floor(Math.random() * arr.length)];
@@ -17,18 +17,18 @@ function generateRandomString(length, arr) {
 
 const chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
 
-const urlDatabase = {
+const urlDatabase = { // url database
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
 };
 
 app.set("view engine", "ejs");
 
-app.get("/", (req, res) => { 
+app.get("/", (req, res) => { // home
   res.send("Hello!");
 });
 
-app.get("/urls", (req, res) => {
+app.get("/urls", (req, res) => { // Load to My URLs page
   const templateVars = { 
     urls: urlDatabase,
     username: req.cookies["username"] 
@@ -36,54 +36,54 @@ app.get("/urls", (req, res) => {
   res.render("urls_index", templateVars);
 });
 
-app.post("/urls", (req, res) => {
+app.post("/urls", (req, res) => { // new shortURL from /urls/new to /urls and redirect to /urls
   const rString = generateRandomString(6, chars);
   urlDatabase[rString] = req.body.longURL;
   console.log(urlDatabase);
-  res.redirect('/urls/');
+  res.redirect('/urls');
 });
 
-app.post("/urls/:shortURL", (req, res) => {
+app.post("/urls/:shortURL", (req, res) => { // urls_show.ejs - display long URL and Short URL created.
   const newLongURL = req.body.longURL;
   const shortURL = req.params.shortURL;
   urlDatabase[shortURL] = newLongURL;
   res.redirect("/urls");
 })
 
-app.get("/urls/new", (req, res) => { // it needs to be placed before shortURL get route. Because Express will think that new is a route parameter.  
+app.get("/urls/new", (req, res) => { // urls_new - webpage to creat shortURL. it needs to be placed before shortURL get route. Because Express will think that new is a route parameter.  
   res.render("urls_new");
 });
 //A good rule of thumb to follow is that routes should be ordered from most specific to least specific.
 
-app.get("/urls/:shortURL", (req, res) => {
+app.get("/urls/:shortURL", (req, res) => { // urls_show.ejs - Retrieve the URL with shortURL that was created already.
   const shortURL = req.params.shortURL;
   const templateVars = { shortURL: shortURL, longURL: urlDatabase[shortURL] };
   res.render("urls_show", templateVars);
 });
 
-app.get("/urls.json", (req, res) => {
+app.get("/urls.json", (req, res) => { // JSON file
   res.json(urlDatabase);
 });
 
-app.get("/hi", (req, res) => {
+app.get("/hello", (req, res) => { // localhost:8080/hello => Hello World
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
 
 
-app.get("/u/:shortURL", (req, res) => {
+app.get("/u/:shortURL", (req, res) => { // direct to longURL
   const shortURL = req.params.shortURL;
   let longURL = urlDatabase[shortURL];
   res.redirect(longURL);
 });
 
 
-app.post("/urls/:shortURL/delete", (req, res) => {
+app.post("/urls/:shortURL/delete", (req, res) => { // urls_index.ejs - delete button from my URLs
   const shortURL = req.params.shortURL;
   delete urlDatabase[shortURL];
   res.redirect("/urls");
 });
 
-app.post("/urls/:shortURL", (req, res)=>{
+app.post("/urls/:shortURL", (req, res)=>{ // urls_index.ejs - edit button from my URLs
   const shortURL = req.params.shortURL;
   urlDatabase[shortURL] = req.body.longURL;
   res.redirect("/urls");
@@ -91,7 +91,7 @@ app.post("/urls/:shortURL", (req, res)=>{
   // res.redirect(longURL);  
 });
 
-app.post("/login",(req,res) => {
+app.post("/login",(req,res) => { // _header.ejs - login button
   const username = req.body.username;
   // console.log(username);
   res.cookie('username',username);
@@ -99,12 +99,12 @@ app.post("/login",(req,res) => {
 
 });
 
-app.post("/logout", (req, res)=> {
+app.post("/logout", (req, res)=> { // _header.ejs - logout button 
   res.clearCookie('username');
   res.redirect('/urls');
 })
 
-app.listen(PORT, () => {
+app.listen(PORT, () => { // my port 8080
   console.log(`Example app listening on port ${PORT}!`);
 });
 
