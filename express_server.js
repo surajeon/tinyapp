@@ -24,6 +24,19 @@ const urlDatabase = { // url database
   "9sm5xK": "http://www.google.com"
 };
 
+const users = { 
+  "userRandomID": {
+    id: "userRandomID", 
+    email: "user@example.com", 
+    password: "purple-monkey-dinosaur"
+  },
+ "user2RandomID": {
+    id: "user2RandomID", 
+    email: "user2@example.com", 
+    password: "dishwasher-funk"
+  }
+}
+
 app.set("view engine", "ejs");
 
 app.get("/", (req, res) => { // home
@@ -108,6 +121,16 @@ app.post("/logout", (req, res)=> { // _header.ejs - logout button
   res.redirect('/urls');
 })
 
+app.get("/register", (req, res) => { // display registeration page
+  const templateVars = { username: req.cookies["username"]};
+  res.render('urls_register',templateVars)
+})
+
+app.post("/register", (req, res) => {
+  const rString = generateRandomString(6, chars);
+  users[rString] = {id: rString, email: req.body.email, password: req.body.password}
+  console.log(users[rString]);
+})
 
 app.listen(PORT, () => { // my port 8080
   console.log(`Example app listening on port ${PORT}!`);
