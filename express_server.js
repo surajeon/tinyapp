@@ -12,6 +12,7 @@ function generateRandomString(length, arr) {
     }
     return random;
 }
+
 const chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
 
 const urlDatabase = {
@@ -29,12 +30,12 @@ app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase }; 
   res.render("urls_index", templateVars);
 });
+
 app.post("/urls", (req, res) => {
   const rString = generateRandomString(6, chars);
   urlDatabase[rString] = req.body.longURL;
   console.log(urlDatabase);
-  // res.redirect(urlDatabase[rString]);
-  res.redirect(`/urls/${rString}`);
+  res.redirect('/urls/');
 });
 
 app.post("/urls/:shortURL", (req, res) => {
