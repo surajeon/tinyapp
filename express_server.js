@@ -29,11 +29,6 @@ const users = {
     id: "userRandomID", 
     email: "user@example.com", 
     password: "purple-monkey-dinosaur"
-  },
- "user2RandomID": {
-    id: "user2RandomID", 
-    email: "user2@example.com", 
-    password: "dishwasher-funk"
   }
 }
 
@@ -44,6 +39,7 @@ app.get("/", (req, res) => { // home
 });
 
 app.get("/urls", (req, res) => { // Load to My URLs page
+  console.log("userDataBase: ", users)
   const templateVars = { 
     urls: urlDatabase,
     username: req.cookies["username"] 
@@ -110,6 +106,7 @@ app.post("/urls/:shortURL", (req, res)=>{ // urls_index.ejs - edit button from m
 
 app.post("/login",(req,res) => { // _header.ejs - login and create cookies
   const username = req.body.username;
+  console.log(username);
   res.cookie('username',username);
   res.redirect('/urls');
 });
@@ -128,8 +125,13 @@ app.get("/register", (req, res) => { // display registeration page
 
 app.post("/register", (req, res) => {
   const rString = generateRandomString(6, chars);
-  users[rString] = {id: rString, email: req.body.email, password: req.body.password}
-  console.log(users[rString]);
+  users[rString] = { id: rString, email: req.body.email, password: req.body.password }
+  // console.log("req.body: ", req.body) //  {email: newEmail , password: newPassword}
+  const usersInfo = users[rString];
+  // console.log(usersInfo);
+
+  res.cookie('user_id', usersInfo['id']);
+  res.redirect('/urls');
 })
 
 app.listen(PORT, () => { // my port 8080
