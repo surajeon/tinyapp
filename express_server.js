@@ -39,10 +39,13 @@ app.get("/", (req, res) => { // home
 });
 
 app.get("/urls", (req, res) => { // Load to My URLs page
-  console.log("userDataBase: ", users)
+  console.log("userDataBase: ", users);
+  //we need to read the cookie value
+  let userId = req.cookies["user_id"];
+  const user = users[userId];
   const templateVars = { 
     urls: urlDatabase,
-    username: req.cookies["username"] 
+    user: user 
   }; 
   res.render("urls_index", templateVars);
 });
@@ -62,14 +65,16 @@ app.post("/urls/:shortURL", (req, res) => { // urls_show.ejs - display long URL 
 })
 
 app.get("/urls/new", (req, res) => { // urls_new - webpage to creat shortURL. it needs to be placed before shortURL get route. Because Express will think that new is a route parameter.  
-  const templateVars = { username: req.cookies["username"] }
+  const user = users[req.cookies["user_id"]];
+  const templateVars = { user: user }
   res.render("urls_new", templateVars);
 });
 //A good rule of thumb to follow is that routes should be ordered from most specific to least specific.
 
 app.get("/urls/:shortURL", (req, res) => { // urls_show.ejs - Retrieve the URL with shortURL that was created already.
   const shortURL = req.params.shortURL;
-  const templateVars = { shortURL: shortURL, longURL: urlDatabase[shortURL], username: req.cookies["username"] };
+  const user = users[req.cookies["user_id"]];
+  const templateVars = { shortURL: shortURL, longURL: urlDatabase[shortURL], user: user };
   res.render("urls_show", templateVars);
 });
 
@@ -103,23 +108,30 @@ app.post("/urls/:shortURL", (req, res)=>{ // urls_index.ejs - edit button from m
   // res.redirect(longURL);  
 });
 
+// /login - it would go to the /login GET route.
+// in the /login get route we need to degign a page which asks for an email and pw, just like a registration
+// When the user submits the info, w eneed to verufy whetehr that user is existing or not with the password check
+// If the user if there and password is ok then we write the cookie, the way we wrote in regstration POST, and redierect it to the /urls
+app.get("/login",(req, res) => {
+  res.render()
+})
 
 app.post("/login",(req,res) => { // _header.ejs - login and create cookies
-  const username = req.body.username;
-  console.log(username);
+  // const userInfo = users[] // new random ID
+  const userID = req.body.user;
+  console.log(user);
   res.cookie('username',username);
-  res.redirect('/urls');
+  const user = req.body
+  res.redirect('/urls',users);
 });
 
-
-
 app.post("/logout", (req, res)=> { // _header.ejs - logout button 
-  res.clearCookie('username');
-  res.redirect('/urls');
+  res.clearCookie('user_id');
+  res.redirect('/urls', users);
 })
 
 app.get("/register", (req, res) => { // display registeration page
-  const templateVars = { username: req.cookies["username"]};
+  const templateVars = { user: undefined};
   res.render('urls_register',templateVars)
 })
 
@@ -129,7 +141,6 @@ app.post("/register", (req, res) => {
   // console.log("req.body: ", req.body) //  {email: newEmail , password: newPassword}
   const usersInfo = users[rString];
   // console.log(usersInfo);
-
   res.cookie('user_id', usersInfo['id']);
   res.redirect('/urls');
 })

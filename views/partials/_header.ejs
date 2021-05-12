@@ -10,19 +10,16 @@
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
       </div>
     </div>
-    <% if (!username){%>
-      <form action="/login" method="POST">
-        <label for="username">Username</label>
-        <input type="text" name="username">
-        <button type="submit">Login</button>
-      </form>
-      <% } %>
-      <% if (username){%>
+    <!-- If the user is not logged in, then we will just present login, register -->
+    <% if (!user){%>
+      <a href="/register" class="btn btn-primary">Register</a>
+      <a href="/Login" class="btn btn-success">Login</a>
+    <% } else { %>
         <form action="/logout" method="POST">
-          <label for="username">Logged In As:<%= username %></label>   
-          <button type="submit">Logout</button>
+            <label for="userID">Logged In As:<%= user.id %></label>   
+            <button type="submit">Logout</button>
         </form>
-      <% } %>
-  
+    <% } %>
+      <!-- logic for the if condition of the user logged in closes -->
   </nav>
 </header>
