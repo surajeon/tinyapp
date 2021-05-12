@@ -3,6 +3,8 @@ const app = express();
 const PORT = 8080; // default port 8080
 const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
+
+
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
 // const morgan = require('morgan');
@@ -51,13 +53,14 @@ app.post("/urls/:shortURL", (req, res) => { // urls_show.ejs - display long URL 
 })
 
 app.get("/urls/new", (req, res) => { // urls_new - webpage to creat shortURL. it needs to be placed before shortURL get route. Because Express will think that new is a route parameter.  
-  res.render("urls_new");
+  const templateVars = { username: req.cookies["username"] }
+  res.render("urls_new", templateVars);
 });
 //A good rule of thumb to follow is that routes should be ordered from most specific to least specific.
 
 app.get("/urls/:shortURL", (req, res) => { // urls_show.ejs - Retrieve the URL with shortURL that was created already.
   const shortURL = req.params.shortURL;
-  const templateVars = { shortURL: shortURL, longURL: urlDatabase[shortURL] };
+  const templateVars = { shortURL: shortURL, longURL: urlDatabase[shortURL], username: req.cookies["username"] };
   res.render("urls_show", templateVars);
 });
 
@@ -70,7 +73,7 @@ app.get("/hello", (req, res) => { // localhost:8080/hello => Hello World
 });
 
 
-app.get("/u/:shortURL", (req, res) => { // direct to longURL
+app.get("/u/:shortURL", (req, res) => { // direct to longURL(actual website)
   const shortURL = req.params.shortURL;
   let longURL = urlDatabase[shortURL];
   res.redirect(longURL);
@@ -91,18 +94,20 @@ app.post("/urls/:shortURL", (req, res)=>{ // urls_index.ejs - edit button from m
   // res.redirect(longURL);  
 });
 
-app.post("/login",(req,res) => { // _header.ejs - login button
+
+app.post("/login",(req,res) => { // _header.ejs - login and create cookies
   const username = req.body.username;
-  // console.log(username);
   res.cookie('username',username);
   res.redirect('/urls');
-
 });
+
+
 
 app.post("/logout", (req, res)=> { // _header.ejs - logout button 
   res.clearCookie('username');
   res.redirect('/urls');
 })
+
 
 app.listen(PORT, () => { // my port 8080
   console.log(`Example app listening on port ${PORT}!`);
