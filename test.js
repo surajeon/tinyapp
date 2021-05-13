@@ -13,13 +13,13 @@ app.use(cookieSession({
 
 app.set('view engine', 'ejs');
 
-const generateRandomString = function(length, arr) {
-  let random = '';
-  for (let i = length; i > 0; i--) {
-    random += arr[Math.floor(Math.random() * arr.length)];
-  }
-  return random;
-};
+// const generateRandomString = function(length, arr) {
+//   let random = '';
+//   for (let i = length; i > 0; i--) {
+//     random += arr[Math.floor(Math.random() * arr.length)];
+//   }
+//   return random;
+// };
 
 const newRandomId = function(length, arr) {
   let random = '';
@@ -30,10 +30,10 @@ const newRandomId = function(length, arr) {
 };
 const chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
-const findUserIdByEmail = function(email) {
+const getUserByEmail = function(email) {
   for (let user in users) {
     if (users[user].email === email) {
-      return users[user].id;
+      return users[user];
     }
   }
   return null;
@@ -41,15 +41,15 @@ const findUserIdByEmail = function(email) {
 
 const userId = newRandomId(6, chars);
 
-const findExistingEmail = function(email) {
-  for (let user in users) {
-    // console.log('user', users[user])
-    if (users[user].email === email) {
-      return true;
-    }
-  }
-  return false;
-};
+// const findExistingEmail = function(email) {
+//   for (let user in users) {
+//     // console.log('user', users[user])
+//     if (users[user].email === email) {
+//       return true;
+//     }
+//   }
+//   return false;
+// };
 
 const urlsForUser = function(id) {
   let result = {};
@@ -142,21 +142,29 @@ app.post('/register', (req, res) => { // register with email and password, check
   // const password = "purple-monkey-dinosaur"; // found in the req.params object
   // const hashedPassword = bcrypt.hashSync(password, 10);
   const password = req.body.password;
-  if (req.body.email === '' || req.body.password === '') {
-    const status = 400;
-    res
-      .status(status)
-      .send('error');
-  } else if (findExistingEmail(req.body.email)){
-    res.status(404).send("User already exists")
-  } else {
-    users[userId] = {
-      id: userId,
-      email: req.body.email,
-      password: bcrypt.hashSync(password, 10)
-    };
+  const email = req.body.email;
+  if(!email || !password) {
+    return res.status(404).send('no email or password provided');
   }
-  req.session.user_id = userId;
+
+  const user = getUserByEmail(email);
+  if(user) {
+    return res.status(404).send('User already exists');
+  }
+  
+  const id = newRandomId();
+  const newUser = {
+    id,
+    email,
+    password: bcrypt.hashSync(password, 10)
+  }
+  users[id] = newUser;
+    // users[userId] = {
+    //   id: userId,
+    //   email: req.body.email,
+    //   password: bcrypt.hashSync(password, 10)
+    // };
+  req.session.user_id = id;
   // console.log("req.session.user_id: ",req.session.user_id)
   // console.log("userId: ",userId)
   // res.cookie('user_id', userId);
@@ -173,10 +181,11 @@ app.get('/login', (req, res) => { // display login page
 app.post('/login', (req, res) => { // login and redirect to either /urls or 403
   const email = req.body.email;
   const password = req.body.password;
-  const userId = findUserIdByEmail(email); // should I change the variable name?
+  const userId = getUserByEmail(email); // should I change the variable name?
   // if (!userId) {
   // }
   // if (users[userId] && password === users[userId].password) {
+  
   if(email.length === 0 || password.length === 0){
     res.status(403).send('Email or Password is invalid');
   } else if (!userId && !bcrypt.compareSync(password, userId.password)){
@@ -247,7 +256,7 @@ app.get('/u/:shortURL',(req, res) => {
     return;
   }
 
-  res.redirect(url.longURL)
+  res.redirect(url.longURL);
 
 })
 
