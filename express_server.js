@@ -3,6 +3,7 @@ const app = express();
 const PORT = 8080; // default port 8080
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
+const bcrypt = require('bcrypt');
 app.use(bodyParser.urlencoded({extended: true}));  //middleware
 app.use(cookieParser());
 app.set('view engine', 'ejs');
@@ -81,6 +82,10 @@ app.get('/urls.json', (req, res) => {
   res.json(urlDatabase);
 });
 
+app.get('/users.json', (req, res) => {
+  res.json(users);
+});
+
 app.get('/hello', (req, res) => {
   res.send('<html><body>Hello <b>World</b></body></html>\n');
 });
@@ -126,7 +131,9 @@ app.get('/register', (req, res) => { // display register page
 });
 
 app.post('/register', (req, res) => { // register with email and password, check duplication
-  // console.log(users);
+  // const password = "purple-monkey-dinosaur"; // found in the req.params object
+  // const hashedPassword = bcrypt.hashSync(password, 10);
+  const password = req.body.password;
   if (req.body.email === '' || req.body.password === '' || findExistingEmail(req.body.email)) {
     const status = 400;
     res
@@ -136,7 +143,7 @@ app.post('/register', (req, res) => { // register with email and password, check
     users[userId] = {
       id: userId,
       email: req.body.email,
-      password: req.body.password
+      password: bcrypt.hashSync(password, 10)
     };
   }
   res.cookie('user_id', userId);
@@ -153,14 +160,15 @@ app.post('/login', (req, res) => { // login and redirect to either /urls or 403
   const email = req.body.email;
   const password = req.body.password;
   const userId = findUserIdByEmail(email);
-  if (!userId) {
-    res.status(403).send('Not Found');
+  // if (!userId) {
+  // }
+  // if (users[userId] && password === users[userId].password) {
+  if(email.length === 0 || password.length === 0){
+    res.status(403).send('Email or Password is invalid');
+  } else if (!userId && !bcrypt.compareSync(password, userId.password)){
+    res.status(403).send("User or Password doesn't match");
   }
-  if (users[userId] && password === users[userId].password) {
-    res.cookie('user_id', userId);
-  } else {
-    res.status(403).send('Forbidden');
-  }
+  res.cookie('user_id', userId);
   res.redirect('/urls');
 });
 
