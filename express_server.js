@@ -33,7 +33,7 @@ const chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
 const findUserIdByEmail = function(email) {
   for (let user in users) {
     if (users[user].email === email) {
-      return users[user].id;
+      return users[user];
     }
   }
   return null;
@@ -98,10 +98,11 @@ app.get('/hello', (req, res) => {
 app.get('/urls', (req, res) => { // home page - urls_index
   // let userId = req.cookies['user_id'];
   const userId = req.session.user_id;
-  console.log("userId: ",userId);
+  console.log("userId: 123 ",userId);
   // console.log('users', users);
   // console.log(users[userId]);
   const templateVars = {
+    urlDatabase,
     urls: urlsForUser(userId),
     user: users[userId],
     error: users[userId] ? null : 'Please Login or Register first'
@@ -174,16 +175,17 @@ app.post('/login', (req, res) => { // login and redirect to either /urls or 403
   const email = req.body.email;
   const password = req.body.password;
   const userId = findUserIdByEmail(email); // should I change the variable name?
-  // if (!userId) {
-  // }
-  // if (users[userId] && password === users[userId].password) {
+
   if(email.length === 0 || password.length === 0){
-    res.status(403).send('Email or Password is invalid');
-  } else if (!userId && !bcrypt.compareSync(password, userId.password)){
-    res.status(403).send("User or Password doesn't match");
+    return res.status(403).send('Email or Password is invalid');
+  } else if (userId === null) {
+    return res.status(403).send("User or Password doesn't match");
+  } else if (!bcrypt.compareSync(password, userId.password)){
+    return res.status(403).send("User or Password doesn't match");
   }
+
   // res.cookie('user_id', userId);
-  req.session.user_id = userId; // what is userId here
+  req.session.user_id = userId.id; // what is userId here
   res.redirect('/urls');
 });
 
