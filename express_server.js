@@ -39,10 +39,7 @@ app.get("/", (req, res) => { // home
 });
 
 app.get("/urls", (req, res) => { // Load to My URLs page
-  console.log("userDataBase: ", users);
-  //we need to read the cookie value
-  let userId = req.cookies["user_id"];
-  const user = users[userId];
+  const user = users[req.cookies["user_id"]];
   const templateVars = { 
     urls: urlDatabase,
     user: user 
@@ -111,15 +108,23 @@ app.post("/urls/:shortURL", (req, res)=>{ // urls_index.ejs - edit button from m
 // /login - it would go to the /login GET route.
 // in the /login get route we need to degign a page which asks for an email and pw, just like a registration
 // When the user submits the info, w eneed to verufy whetehr that user is existing or not with the password check
-// If the user if there and password is ok then we write the cookie, the way we wrote in regstration POST, and redierect it to the /urls
+// If the user is there and password is ok then we write the cookie, the way we wrote in regstration POST, and redierect it to the /urls
 app.get("/login",(req, res) => {
-  res.render()
+  const user = users[req.cookies["user_id"]]; // user to userInfo?
+  const templateVars = { user: user };
+  res.render('urls_login', templateVars)
 })
 
 app.post("/login",(req,res) => { // _header.ejs - login and create cookies
   // const userInfo = users[] // new random ID
+  const emailPassword = { userEmail: req.body.email, userPassword: req.body.password}
+  for (let userInfo in users) {
+    if (emailPassword[userEmail] === userInfo[email]) {
+      // email provided and email in "users" are the same 
+    } 
+  }
   const userID = req.body.user;
-  console.log(user);
+  // console.log(user);
   res.cookie('username',username);
   const user = req.body
   res.redirect('/urls',users);
@@ -127,7 +132,7 @@ app.post("/login",(req,res) => { // _header.ejs - login and create cookies
 
 app.post("/logout", (req, res)=> { // _header.ejs - logout button 
   res.clearCookie('user_id');
-  res.redirect('/urls', users);
+  res.redirect('/urls');
 })
 
 app.get("/register", (req, res) => { // display registeration page
@@ -135,14 +140,31 @@ app.get("/register", (req, res) => { // display registeration page
   res.render('urls_register',templateVars)
 })
 
-app.post("/register", (req, res) => {
-  const rString = generateRandomString(6, chars);
-  users[rString] = { id: rString, email: req.body.email, password: req.body.password }
-  // console.log("req.body: ", req.body) //  {email: newEmail , password: newPassword}
-  const usersInfo = users[rString];
-  // console.log(usersInfo);
-  res.cookie('user_id', usersInfo['id']);
-  res.redirect('/urls');
+app.post("/register", (req, res) => { // register email and password and redirect to /urls
+  if (req.body.email === "" || req.body.password === "") { // email/password with empty string - 400 status code
+    res.send(400)
+  } 
+  let duplicateEmail = false; // On/Off switch?
+  for (let userInfo in users) { // loop inside "users" to check if the email already exists
+    console.log(users[userInfo])
+    // console.log("user: ",user);
+    // console.log("users[user]: ",users[user].email)
+    if (req.body.email === users[userInfo].email) {
+      // console.log("New email: ",req.body.email)
+      duplicateEmail = true;
+    } 
+  }
+  if (duplicateEmail === true) { // 
+    res.sendStatus(400);
+  } else {  
+    const rString = generateRandomString(6, chars);
+    users[rString] = { id: rString, email: req.body.email, password: req.body.password }
+    // console.log("req.body: ", req.body) //  {email: newEmail , password: newPassword}
+    const usersInfo = users[rString];
+    // console.log(usersInfo);
+    res.cookie('user_id', usersInfo['id']);
+    res.redirect('/urls');
+  }
 })
 
 app.listen(PORT, () => { // my port 8080
