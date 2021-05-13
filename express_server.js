@@ -6,6 +6,7 @@ const cookieParser = require('cookie-parser');
 app.use(bodyParser.urlencoded({extended: true}));  //middleware
 app.use(cookieParser());
 app.set('view engine', 'ejs');
+
 const generateRandomString = function(length, arr) {
   let random = '';
   for (let i = length; i > 0; i--) {
@@ -13,6 +14,7 @@ const generateRandomString = function(length, arr) {
   }
   return random;
 };
+
 const newRandomId = function(length, arr) {
   let random = '';
   for (let i = length; i > 0; i--) {
@@ -21,10 +23,43 @@ const newRandomId = function(length, arr) {
   return random;
 };
 const chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+const findUserIdByEmail = function(email) {
+  for (let user in users) {
+    if (users[user].email === email) {
+      return users[user].id;
+    }
+  }
+  return null;
+};
+
+const userId = newRandomId(6, chars);
+
+const findExistingEmail = function(email) {
+  for (let user in users) {
+    // console.log('user', users[user])
+    if (users[user].email === email) {
+      return true;
+    }
+  }
+  return false;
+};
+
+const urlsForUser = function(id) {
+  let result = {};
+  for (let shortURL in urlDatabase) {
+    if (urlDatabase[shortURL].userID === id) {
+      result[shortURL] = urlDatabase[shortURL];
+    }
+  }
+  return result;
+};
+
 const urlDatabase = {
   'b2xVn2': { longURL: 'https://www.tsn.ca', userID: 'aJ48lW' },
   '9sm5xK': { longURL: 'https://www.google.ca', userID: 'aJ48lW' }
 };
+
 const users = {
   'userRandomID': {
     id: 'userRandomID',
@@ -37,26 +72,20 @@ const users = {
     password: 'dishwasher-funk'
   }
 };
+
 app.get('/', (req, res) => {
   res.send('Hello!');
 });
-app.post('/urls', (req, res) => {
-  const newString = generateRandomString(6, chars);
-  urlDatabase[newString] = {longURL: req.body.longURL, userID: req.cookies['user_id']};
-  // res.send('go to a new page');
-  res.redirect('/urls');
-});
-// root path '/'; JSON string representing the entire urlDatabase object can see
-// '/sth' --> route
+
 app.get('/urls.json', (req, res) => {
   res.json(urlDatabase);
 });
+
 app.get('/hello', (req, res) => {
-  // const templateVars = { greeting: 'Hello World!' };
-  // res.render('hello_world', templateVars);
   res.send('<html><body>Hello <b>World</b></body></html>\n');
 });
-app.get('/urls', (req, res) => {
+
+app.get('/urls', (req, res) => { // home page - urls_index
   let userId = req.cookies['user_id'];
   // console.log('users', users);
   // console.log(users[userId]);
@@ -68,17 +97,20 @@ app.get('/urls', (req, res) => {
   // console.log('error', userId);
   res.render('urls_index', templateVars);
 });
-const urlsForUser = function(id) {
-  let result = {};
-  for (let shortURL in urlDatabase) {
-    if (urlDatabase[shortURL].userID === id) {
-      result[shortURL] = urlDatabase[shortURL];
-    }
-  }
-  return result;
-};
+
+app.post('/urls', (req, res) => { 
+  const newString = generateRandomString(6, chars);
+  urlDatabase[newString] = {longURL: req.body.longURL, userID: req.cookies['user_id']};
+  res.redirect('/urls');
+});
+// root path '/'; JSON string representing the entire urlDatabase object can see
+// '/sth' --> route
+
+
+
 // if we place this route after the /urls/:id definition, any calls to /urls/new will be handled by app.get('/urls/:id', ...) because Express will think that new is a route parameter.
-app.get('/urls/new', (req, res) => {
+
+app.get('/urls/new', (req, res) => { // display new url create page
   let userId = req.cookies['user_id'];
   const templateVars = { user: users[userId] };
   if (userId) {
@@ -87,78 +119,13 @@ app.get('/urls/new', (req, res) => {
     res.redirect('/login');
   }
 });
-app.get('/urls/:shortURL', (req, res) => {
-  let userId = req.cookies['user_id'];
-  const shortURL = req.params.shortURL;
-  const templateVars = {
-    shortURL: shortURL,
-    longURL: urlDatabase[shortURL].longURL,
-    user: users[userId],
-    error: users[userId] ? null : 'Please Login or Register first' };
-  if (userId) {
-    res.render('urls_show', templateVars);
-  } else {
-    res.redirect('/urls');
-  }
-});
-app.get('/login', (req, res) => {
-  let userId = req.cookies['user_id'];
-  const templateVars = {user: users[userId]};
-  res.render('urls_login', templateVars);
-});
-app.get('/register', (req, res) => {
+
+app.get('/register', (req, res) => { // display register page
   const templateVars = {user: null};
   res.render('urls_register', templateVars);
 });
-app.post('/urls/:shortURL/delete', (req, res) => {
-  let userId = req.cookies['user_id'];
-  if (!users[userId]) {
-    res.status(403).send('Not Found');
-  } else {
-    const deleteToggle = req.params.shortURL;
-    delete urlDatabase[deleteToggle];
-    res.redirect('/urls');
-  }
-});
-app.post('/urls/:shortURL', (req, res) => {
-  let userId = req.cookies['user_id'];
-  if (!users[userId]) {
-    res.status(403).send('Not Found');
-  } else {
-    const shortURL = req.params.shortURL;
-    const newLongURL = req.body.longURL;
-    urlDatabase[shortURL].longURL = newLongURL;
-    res.redirect('/urls');
-  }
-});
-const findUserIdByEmail = function(email) {
-  for (let user in users) {
-    if (users[user].email === email) {
-      return users[user].id;
-    }
-  }
-  return null;
-};
-app.post('/login', (req, res) => {
-  const email = req.body.email;
-  const password = req.body.password;
-  const userId = findUserIdByEmail(email);
-  if (!userId) {
-    res.status(403).send('Not Found');
-  }
-  if (users[userId] && password === users[userId].password) {
-    res.cookie('user_id', userId);
-  } else {
-    res.status(403).send('Forbidden');
-  }
-  res.redirect('/urls');
-});
-app.post('/logout', (req, res) => {
-  res.clearCookie('user_id');
-  res.redirect('/urls');
-});
-app.post('/register', (req, res) => {
-  const userId = newRandomId(6, chars);
+
+app.post('/register', (req, res) => { // register with email and password, check duplication
   // console.log(users);
   if (req.body.email === '' || req.body.password === '' || findExistingEmail(req.body.email)) {
     const status = 400;
@@ -175,16 +142,71 @@ app.post('/register', (req, res) => {
   res.cookie('user_id', userId);
   res.redirect('/urls');
 });
-// true, false
-const findExistingEmail = function(email) {
-  for (let user in users) {
-    // console.log('user', users[user])
-    if (users[user].email === email) {
-      return true;
-    }
+
+app.get('/login', (req, res) => { // display login page
+  let userId = req.cookies['user_id'];
+  const templateVars = {user: users[userId]};
+  res.render('urls_login', templateVars);
+});
+
+app.post('/login', (req, res) => { // login and redirect to either /urls or 403
+  const email = req.body.email;
+  const password = req.body.password;
+  const userId = findUserIdByEmail(email);
+  if (!userId) {
+    res.status(403).send('Not Found');
   }
-  return false;
-};
-app.listen(PORT, () => {
+  if (users[userId] && password === users[userId].password) {
+    res.cookie('user_id', userId);
+  } else {
+    res.status(403).send('Forbidden');
+  }
+  res.redirect('/urls');
+});
+
+app.post('/logout', (req, res) => { // logout and direct to main page
+  res.clearCookie('user_id');
+  res.redirect('/urls');
+});
+
+app.get('/urls/:shortURL', (req, res) => { // short URL page, you can long url here edit here
+  let userId = req.cookies['user_id'];
+  const shortURL = req.params.shortURL;
+  const templateVars = {
+    shortURL: shortURL,
+    longURL: urlDatabase[shortURL].longURL,
+    user: users[userId],
+    error: users[userId] ? null : 'Please Login or Register first' };
+  if (userId) {
+    res.render('urls_show', templateVars);
+  } else {
+    res.redirect('/urls');
+  }
+});
+
+app.post('/urls/:shortURL', (req, res) => { // change to long url and go back to my urls
+  let userId = req.cookies['user_id'];
+  if (!users[userId]) {
+    res.status(403).send('Not Found');
+  } else {
+    const shortURL = req.params.shortURL;
+    const newLongURL = req.body.longURL;
+    urlDatabase[shortURL].longURL = newLongURL;
+    res.redirect('/urls');
+  }
+});
+
+app.post('/urls/:shortURL/delete', (req, res) => { // deleting urls from my urls
+  let userId = req.cookies['user_id'];
+  if (!users[userId]) {
+    res.status(403).send('Not Found');
+  } else {
+    const deleteToggle = req.params.shortURL;
+    delete urlDatabase[deleteToggle];
+    res.redirect('/urls');
+  }
+});
+
+app.listen(PORT, () => { // my port
   console.log(`Example app listening on port ${PORT}!`);
 });
