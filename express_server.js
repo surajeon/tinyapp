@@ -113,7 +113,7 @@ app.get("/login",(req, res) => {
   const user = users[req.cookies["user_id"]]; // user to userInfo?
   const templateVars = { user: user };
   res.render('urls_login', templateVars)
-})
+});
 
 app.post("/login",(req,res) => { // _header.ejs - login and create cookies
   // const userInfo = users[] // new random ID
