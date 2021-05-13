@@ -16,7 +16,7 @@
       <a href="/Login" class="btn btn-success">Login</a>
     <% } else { %>
         <form action="/logout" method="POST">
-            <label for="userID">Logged In As:<%= user.id %></label>   
+            <label for="userID">Logged In As:<%= user.email %></label>   
             <button type="submit">Logout</button>
         </form>
     <% } %>
