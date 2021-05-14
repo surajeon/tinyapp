@@ -4,7 +4,7 @@ const PORT = 8080; // default port 8080
 const bodyParser = require('body-parser');
 const cookieSession = require('cookie-session');
 const bcrypt = require('bcrypt');
-const { checkUserByEmail, newRandomId } = require('./helpers');
+const { getUserByEmail, newRandomId } = require('./helpers');
 
 app.use(bodyParser.urlencoded({extended: true}));  //middleware
 
@@ -26,8 +26,7 @@ const urlsForUser = function(id) {
 };
 
 const urlDatabase = {
-  'b2xVn2': { longURL: 'https://www.tsn.ca', userID: 'aJ48lW' },
-  '9sm5xK': { longURL: 'https://www.google.ca', userID: 'aJ48lW' }
+  
 };
 
 const users = {
@@ -44,7 +43,10 @@ const users = {
 };
 
 app.get('/', (req, res) => {
-  res.send('Hello!');
+  if (!req.session.user_id) {
+    return res.redirect('/login');
+  }
+  res.redirect('/urls');
 });
 
 app.get('/urls.json', (req, res) => {
@@ -62,16 +64,17 @@ app.get('/hello', (req, res) => {
 app.get('/urls', (req, res) => { // home page - urls_index
   // let userId = req.cookies['user_id'];
   const userId = req.session.user_id;
-  console.log("userId: 123 ",userId);
-  // console.log('users', users);
-  // console.log(users[userId]);
+
   const templateVars = {
     urlDatabase,
     urls: urlsForUser(userId),
     user: users[userId],
     error: users[userId] ? null : 'Please Login or Register first'
   };
-  // console.log('error', userId);
+  console.log("tempURLS: ",templateVars.urls)
+  console.log("UserId: ", userId)
+
+  
   res.render('urls_index', templateVars);
 });
 
@@ -117,7 +120,7 @@ app.post('/register', (req, res) => { // register with email and password, check
   // } 
 
   
-  const userCheck = checkUserByEmail(email, users)
+  const userCheck = getUserByEmail(email, users)
   if(userCheck) {
     return res.status(404).send("User already exists")
   }
@@ -150,7 +153,7 @@ app.post('/login', (req, res) => { // login and redirect to either /urls or 403
   // console.log("email",email)
   const password = req.body.password;
   // console.log("password",password);
-  const user = checkUserByEmail(email, users)
+  const user = getUserByEmail(email, users)
   // console.log("check: ", userCheck); // user obj
   
   if(!email.length || !password.length){
@@ -184,17 +187,24 @@ app.post('/logout', (req, res) => { // logout and direct to main page
 app.get('/urls/:shortURL', (req, res) => { // short URL page, you can long url here edit here
   // let userId = req.cookies['user_id'];
   const userId = req.session.user_id;
+  const shortURL = req.params.shortURL;
+  
+  if(urlDatabase[shortURL].userID !== userId) {
+    return res.status(400).send("You don't have permission to edit this URL")
+  }
+
   if (!userId) {
     return res.redirect('/urls'); 
   }
+  
 
-  const shortURL = req.params.shortURL;
   const templateVars = {
     shortURL: shortURL,
     longURL: urlDatabase[shortURL].longURL,
     user: users[userId],
-    error: users[userId] ? null : 'Please Login or Register first' };
-    res.render('urls_show', templateVars);
+    error: users[userId] ? null : 'Please Login or Register first' 
+  };
+  res.render('urls_show', templateVars);
   // } else {
   // }
 });

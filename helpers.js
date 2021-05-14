@@ -1,4 +1,4 @@
-const checkUserByEmail = function(email, database) {
+const getUserByEmail = function(email, database) {
   for (let userId in database) {
     if (database[userId].email === email) {
       return database[userId];
@@ -16,4 +16,4 @@ const newRandomId = function() {
   return random;
 }
 
-module.exports = { checkUserByEmail , newRandomId };
+module.exports = { getUserByEmail , newRandomId };

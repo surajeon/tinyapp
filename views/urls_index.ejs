@@ -26,10 +26,10 @@
         </tr>
       </thead>
       <tbody>
-        <% for(let url in urlDatabase) { %>
+        <% for(let url in urls) { %>
           <tr>
             <td><%= url %></td>
-            <td><%= urlDatabase[url].longURL %></td>
+            <td><%= urls[url].longURL %></td>
             <td><form method="GET" action= "/urls/<%= url %>/">
               <button class= "btn btn-outline-primary" type="submit">Edit</button>
             </form></td> 
