@@ -4,62 +4,16 @@ const PORT = 8080; // default port 8080
 const bodyParser = require('body-parser');
 const cookieSession = require('cookie-session');
 const bcrypt = require('bcrypt');
+const { checkUserByEmail, newRandomId } = require('./helpers');
+
 app.use(bodyParser.urlencoded({extended: true}));  //middleware
-// app.use(cookieParser());
+
 app.use(cookieSession({
   name: 'session',
   keys: ['key1', 'key2']
 }))
 
 app.set('view engine', 'ejs');
-
-const generateRandomString = function(length, arr) {
-  let random = '';
-  for (let i = length; i > 0; i--) {
-    random += arr[Math.floor(Math.random() * arr.length)];
-  }
-  return random;
-};
-
-// const newRandomId = function(length, arr) {
-//   let random = '';
-//   for (let i = length; i > 0; i--) {
-//     random += arr[Math.floor(Math.random() * arr.length)];
-//   }
-//   return random;
-// };
-
-const newRandomId = function() {
-  const arr = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-  let random = '';
-  for (let i = 0; i <= 5; i++) {
-    random += arr[Math.floor(Math.random() * arr.length)];
-  }
-  return random;
-}
-
-// const chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-
-const findUserIdByEmail = function(email) {
-  for (let user in users) {
-    if (users[user].email === email) {
-      return users[user];
-    }
-  }
-  return null;
-};
-
-// const userId = newRandomId(6, chars);
-
-// const findExistingEmail = function(email) {
-//   for (let user in users) {
-//     // console.log('user', users[user])
-//     if (users[user].email === email) {
-//       return true;
-//     }
-//   }
-//   return false;
-// };
 
 const urlsForUser = function(id) {
   let result = {};
@@ -158,9 +112,15 @@ app.post('/register', (req, res) => { // register with email and password, check
     return res.status(400).send('error');
   }
 
-  if (findUserIdByEmail(email)){
+  // if (findUserIdByEmail(email)){
+  //   return res.status(404).send("User already exists")
+  // } 
+
+  
+  const userCheck = checkUserByEmail(email, users)
+  if(userCheck) {
     return res.status(404).send("User already exists")
-  } 
+  }
   
   const id = newRandomId();
   const user = {
@@ -187,16 +147,25 @@ app.get('/login', (req, res) => { // display login page
 
 app.post('/login', (req, res) => { // login and redirect to either /urls or 403
   const email = req.body.email;
+  // console.log("email",email)
   const password = req.body.password;
+  // console.log("password",password);
+  const user = checkUserByEmail(email, users)
+  // console.log("check: ", userCheck); // user obj
   
   if(!email.length || !password.length){
     return res.status(403).send('Email or Password is invalid');
   } 
 
-  const user = findUserIdByEmail(email); // should I change the variable name?
-  if (!user) {
-    return res.status(403).send("User or Password doesn't match");
-  } 
+  // const user = findUserIdByEmail(email); // should I change the variable name?
+  // console.log("여기",user);
+  // if (!user) {
+  //   return res.status(403).send("User or Password doesn't match");
+  // } 
+
+  if(!user) {
+    return res.status(403).send("User or Password doesn't match");  
+  }
 
   if (!bcrypt.compareSync(password, user.password)){
     return res.status(403).send("User or Password doesn't match");
