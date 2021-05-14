@@ -112,7 +112,7 @@ app.post('/register', (req, res) => { // register with email and password, check
   const email = req.body.email;
   const password = req.body.password;
   if (!password || !email) {
-    return res.status(400).send('error');
+    return res.status(400).send('Please enter your new email and password to create your account');
   }
 
   // if (findUserIdByEmail(email)){
