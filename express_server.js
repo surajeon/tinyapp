@@ -21,14 +21,24 @@ const generateRandomString = function(length, arr) {
   return random;
 };
 
-const newRandomId = function(length, arr) {
+// const newRandomId = function(length, arr) {
+//   let random = '';
+//   for (let i = length; i > 0; i--) {
+//     random += arr[Math.floor(Math.random() * arr.length)];
+//   }
+//   return random;
+// };
+
+const newRandomId = function() {
+  const arr = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
   let random = '';
-  for (let i = length; i > 0; i--) {
+  for (let i = 0; i <= 5; i++) {
     random += arr[Math.floor(Math.random() * arr.length)];
   }
   return random;
-};
-const chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+}
+
+// const chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
 const findUserIdByEmail = function(email) {
   for (let user in users) {
@@ -39,17 +49,17 @@ const findUserIdByEmail = function(email) {
   return null;
 };
 
-const userId = newRandomId(6, chars);
+// const userId = newRandomId(6, chars);
 
-const findExistingEmail = function(email) {
-  for (let user in users) {
-    // console.log('user', users[user])
-    if (users[user].email === email) {
-      return true;
-    }
-  }
-  return false;
-};
+// const findExistingEmail = function(email) {
+//   for (let user in users) {
+//     // console.log('user', users[user])
+//     if (users[user].email === email) {
+//       return true;
+//     }
+//   }
+//   return false;
+// };
 
 const urlsForUser = function(id) {
   let result = {};
@@ -112,7 +122,7 @@ app.get('/urls', (req, res) => { // home page - urls_index
 });
 
 app.post('/urls', (req, res) => { 
-  const newString = generateRandomString(6, chars);
+  const newString = newRandomId();
   urlDatabase[newString] = {longURL: req.body.longURL, userID: req.session.user_id};
   res.redirect('/urls');
 });
@@ -142,22 +152,25 @@ app.get('/register', (req, res) => { // display register page
 app.post('/register', (req, res) => { // register with email and password, check duplication
   // const password = "purple-monkey-dinosaur"; // found in the req.params object
   // const hashedPassword = bcrypt.hashSync(password, 10);
+  const email = req.body.email;
   const password = req.body.password;
-  if (req.body.email === '' || req.body.password === '') {
-    const status = 400;
-    res
-      .status(status)
-      .send('error');
-  } else if (findExistingEmail(req.body.email)){
-    res.status(404).send("User already exists")
-  } else {
-    users[userId] = {
-      id: userId,
-      email: req.body.email,
+  if (!password || !email) {
+    return res.status(400).send('error');
+  }
+
+  if (findUserIdByEmail(email)){
+    return res.status(404).send("User already exists")
+  } 
+  
+  const id = newRandomId();
+  const user = {
+      id,
+      email,
       password: bcrypt.hashSync(password, 10)
     };
-  }
-  req.session.user_id = userId;
+    console.log("user:", user);
+  users[id] = user;
+  req.session.user_id = id;
   // console.log("req.session.user_id: ",req.session.user_id)
   // console.log("userId: ",userId)
   // res.cookie('user_id', userId);
@@ -168,24 +181,29 @@ app.get('/login', (req, res) => { // display login page
   // let userId = req.cookies['user_id'];
   const userId = req.session.user_id;
   const templateVars = {user: users[userId]};
+
   res.render('urls_login', templateVars);
 });
 
 app.post('/login', (req, res) => { // login and redirect to either /urls or 403
   const email = req.body.email;
   const password = req.body.password;
-  const userId = findUserIdByEmail(email); // should I change the variable name?
-
-  if(email.length === 0 || password.length === 0){
+  
+  if(!email.length || !password.length){
     return res.status(403).send('Email or Password is invalid');
-  } else if (userId === null) {
+  } 
+
+  const user = findUserIdByEmail(email); // should I change the variable name?
+  if (!user) {
     return res.status(403).send("User or Password doesn't match");
-  } else if (!bcrypt.compareSync(password, userId.password)){
+  } 
+
+  if (!bcrypt.compareSync(password, user.password)){
     return res.status(403).send("User or Password doesn't match");
   }
 
   // res.cookie('user_id', userId);
-  req.session.user_id = userId.id; // what is userId here
+  req.session.user_id = user.id; // what is userId here
   res.redirect('/urls');
 });
 
@@ -198,8 +216,7 @@ app.get('/urls/:shortURL', (req, res) => { // short URL page, you can long url h
   // let userId = req.cookies['user_id'];
   const userId = req.session.user_id;
   if (!userId) {
-    res.redirect('/urls'); 
-    return;
+    return res.redirect('/urls'); 
   }
 
   const shortURL = req.params.shortURL;
@@ -231,8 +248,7 @@ app.post('/urls/:shortURL/delete', (req, res) => { // deleting urls from my urls
   // let userId = req.cookies['user_id'];
   const userId = req.session.user_id;
   if (!users[userId]) {
-    res.status(403).send('Not Found');
-    return;
+    return res.status(403).send('Not Found');
   } 
 
     const deleteToggle = req.params.shortURL;
@@ -245,8 +261,7 @@ app.get('/u/:shortURL',(req, res) => {
   const shortURL = req.params.shortURL;
   const url = urlDatabase[shortURL];
   if (!url) {
-    res.status(404).send('not found');
-    return;
+    return res.status(404).send('not found');
   }
 
   res.redirect(url.longURL)
